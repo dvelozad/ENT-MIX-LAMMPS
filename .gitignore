@@ -1,0 +1,31 @@
+# LAMMPS executable
+lmp
+lmp_*
+src/lmp_*
+
+# Compiled Object files
+*.o
+*.slo
+*.lo
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Build directories
+build/
+cmake-build*/
+
+# Output files
+*.dump
+*.log
+*.data
+restart.*
