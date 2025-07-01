@@ -58,6 +58,9 @@ class Molecule : protected Pointers {
   int tag_require;
 
   // attributes
+   // ------- Demix section
+  int N_flag, moltypeHflag, reservoirHflag;
+  int *N;      // replambdaH on each atom
 
   double **x;          // displacement of each atom from origin
   int *type;           // type of each atom
@@ -158,6 +161,9 @@ class Molecule : protected Pointers {
   void shakeatom_read(char *);
   void shaketype_read(char *);
   void body(int, int, char *);
+
+   // ------- H Adress section
+  void N_neighbor_atom(char *line);
 
   void initialize();
   void allocate();

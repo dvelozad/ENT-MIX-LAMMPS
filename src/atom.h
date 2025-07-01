@@ -51,6 +51,11 @@ class Atom : protected Pointers {
   bigint ntris;          // number of triangles
   bigint nbodies;        // number of bodies
 
+  // Demix section
+  double *N;             // number of H atoms in each molecule
+  int N_flag;
+
+
   // system properties
 
   bigint nbonds, nangles, ndihedrals, nimpropers;

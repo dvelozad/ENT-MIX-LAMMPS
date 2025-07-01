@@ -50,7 +50,7 @@ Molecule::Molecule(LAMMPS *lmp, int narg, char **arg, int &index) :
     special(nullptr), shake_flag(nullptr), shake_atom(nullptr), shake_type(nullptr),
     avec_body(nullptr), ibodyparams(nullptr), dbodyparams(nullptr), fragmentmask(nullptr),
     dx(nullptr), dxcom(nullptr), dxbody(nullptr), quat_external(nullptr), fp(nullptr),
-    count(nullptr)
+    count(nullptr), N(nullptr)
 {
   me = comm->me;
 
@@ -555,6 +555,12 @@ void Molecule::read(int flag)
         molecules(line);
       else
         skip_lines(natoms, line, keyword);
+    } else if (keyword == "N") { // ------- H Adress section
+      N_flag = 1;
+      if (flag)
+        N_neighbor_atom(line);
+      else
+        skip_lines(natoms, line, keyword);
     } else if (keyword == "Fragments") {
       if (nfragments == 0)
         error->all(FLERR, "Found Fragments section but no nfragments setting in header");
@@ -918,6 +924,39 @@ void Molecule::charges(char *line)
   for (int i = 0; i < natoms; i++) {
     if (count[i] == 0)
       error->all(FLERR, "Atom {} missing in Charges section of molecule file", i + 1);
+  }
+}
+
+/* ----------------------------------------------------------------------
+   read N neighbor data from file 
+------------------------------------------------------------------------- */
+void Molecule::N_neighbor_atom(char *line) {
+  for (int i = 0; i < natoms; i++) count[i] = 0;
+  try {
+    for (int i = 0; i < natoms; i++) {
+      readline(line);
+
+      ValueTokenizer values(utils::trim_comment(line));
+      if (values.count() != 2)
+        error->all(FLERR, "Invalid line in N neighbor Atom section of molecule file: {}", line);
+
+      int iatom = values.next_int() - 1;
+      if (iatom < 0 || iatom >= natoms)
+        error->all(FLERR, "Invalid atom index in N neighbor Atom section of molecule file");
+
+      printf("iatom = %d, natoms = %d, line = %s\n", iatom, natoms, line);
+
+      // Here, we ensure we're reading the N value as an integer
+      count[iatom]++;
+      N[iatom] = values.next_int();
+    }
+  } catch (TokenizerException &e) {
+    error->all(FLERR, "Invalid line in N neighbor Atom section of molecule file: {}\n{}", e.what(), line);
+  }
+
+  for (int i = 0; i < natoms; i++) {
+    if (count[i] == 0)
+      error->all(FLERR, "Atom {} missing in N neighbor Atom section of molecule file", i + 1);
   }
 }
 
@@ -1997,6 +2036,9 @@ void Molecule::allocate()
   if (muflag) memory->create(mu, natoms, 3, "molecule:mu");
   if (radiusflag) memory->create(radius, natoms, "molecule:radius");
   if (rmassflag) memory->create(rmass, natoms, "molecule:rmass");
+
+     // ------- Demix section
+  if (N_flag) memory->create(N, natoms, "molecule:N");
 
   // always allocate num_bond,num_angle,etc and nspecial
   // even if not in molecule file, initialize to 0

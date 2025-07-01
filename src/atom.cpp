@@ -107,6 +107,9 @@ Atom::Atom(LAMMPS *_lmp) : Pointers(_lmp), atom_style(nullptr), avec(nullptr), a
   binhead = nullptr;
   next = permute = nullptr;
 
+  // ------- Demix section
+  N = NULL;
+
   // --------------------------------------------------------------------
   // 1st customization section: customize by adding new per-atom variables
 
@@ -299,6 +302,9 @@ Atom::~Atom()
   delete avec;
   delete avec_map;
 
+   // ------- H Adress section
+  memory->destroy(N);
+
   delete[] firstgroupname;
   memory->destroy(binhead);
   memory->destroy(next);
@@ -420,6 +426,9 @@ void Atom::peratom_create()
   add_peratom("q",&q,DOUBLE,0);
   add_peratom("mu",&mu,DOUBLE,4);
   add_peratom("mu3",&mu,DOUBLE,3);     // just first 3 values of mu[4]
+
+  // Demix section
+  add_peratom("N",&N,DOUBLE,0);
 
   // finite size particles
 
@@ -636,6 +645,9 @@ void Atom::set_atomflag_defaults()
   // --------------------------------------------------------------------
   // 3rd customization section: customize by adding new flag
   // identical list as 2nd customization in atom.h
+
+   // ------- Demix section
+  N_flag = 0;
 
   labelmapflag = 0;
   ellipsoid_flag = line_flag = tri_flag = body_flag = 0;
@@ -2181,6 +2193,9 @@ std::vector<Molecule *>Atom::get_molecule_by_id(const std::string &id)
 
 void Atom::add_molecule_atom(Molecule *onemol, int iatom, int ilocal, tagint offset)
 {
+  // ------- Demix section
+  if (onemol->N_flag && N_flag) N[ilocal] = onemol->N[iatom];
+
   if (onemol->qflag && q_flag) q[ilocal] = onemol->q[iatom];
   if (onemol->muflag && mu_flag) {
     double r[3], rotmat[3][3];
@@ -3019,6 +3034,10 @@ void *Atom::extract(const char *name)
   // --------------------------------------------------------------------
   // 4th customization section: customize by adding new variable name
   // if new variable is from a package, add package comment
+
+// ------- H Adress section
+  if (strcmp(name,"N") == 0) return (void *) N;
+// ********************************************************************
 
   if (strcmp(name,"mass") == 0) return (void *) mass;
 
